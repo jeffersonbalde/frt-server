@@ -1,7 +1,7 @@
 <x-layouts.app title="Customers">
     <x-slot:actions>
-        <form method="GET" action="{{ route('customers.index') }}" class="flex gap-2">
-            <input type="search" name="q" value="{{ $search }}" placeholder="Search name, address, contact" class="input w-64">
+        <form method="GET" action="{{ route('customers.index') }}" class="flex w-full gap-2 sm:w-auto">
+            <input type="search" name="q" value="{{ $search }}" placeholder="Search name, address, contact" class="input min-w-0 flex-1 sm:w-64 sm:flex-none">
             <button type="submit" class="btn btn-secondary">Search</button>
         </form>
     </x-slot:actions>

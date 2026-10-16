@@ -1,5 +1,5 @@
 <x-layouts.app title="Settings">
-    <form method="POST" action="{{ route('settings.update') }}" class="grid max-w-4xl gap-6 lg:grid-cols-2">
+    <form method="POST" action="{{ route('settings.update') }}" class="grid max-w-4xl grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         @csrf
         @method('PUT')
 

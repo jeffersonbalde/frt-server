@@ -20,7 +20,7 @@
         </div>
     @endif
 
-    <div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 2xl:grid-cols-5">
+    <div class="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 2xl:grid-cols-5">
         <x-stat label="Total sales" icon="cash" :value="money($totals['total_sales'])" tone="brand" :hint="'Milling cash '.money($totals['milling_cash']).' + tahop income '.money($totals['tahop_income'])" />
         <x-stat label="Rice milled" icon="scale" :value="kg($totals['kg']).' kg'" :hint="$totals['sacks'].' sacks · '.$totals['milling_count'].' customers'" />
         <x-stat label="Tahop" icon="leaf" :value="money($totals['tahop_income'])" :hint="'Income · sold '.kg($totals['tahop_kg_sold']).' kg · taken '.kg($totals['tahop_kg_bought']).' kg'" />

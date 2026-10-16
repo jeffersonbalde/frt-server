@@ -21,7 +21,7 @@
         </div>
     @endif
 
-    <div class="grid gap-6 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
         <section class="card">
             <h2 class="mb-3 font-semibold text-slate-900">Start of Day</h2>
             <dl class="grid grid-cols-2 gap-y-2 text-sm">
@@ -40,6 +40,7 @@
         <section class="card">
             <h2 class="mb-3 font-semibold text-slate-900">Cash breakdown</h2>
             @if ($session->status === 'closed')
+                <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead><tr class="text-left text-slate-500"><th class="w-6 pr-2 pb-1 font-medium">#</th><th class="pr-2 pb-1 font-medium">Pcs</th><th class="pr-2 pb-1 font-medium">Bill</th><th class="pb-1 text-right font-medium">Amount</th></tr></thead>
                     <tbody>
@@ -54,6 +55,7 @@
                     </tbody>
                     <tfoot><tr class="border-t border-slate-300 font-semibold"><td colspan="3">Total cash</td><td class="text-right tabular-nums">{{ money($session->cash_counted) }}</td></tr></tfoot>
                 </table>
+                </div>
             @else
                 <p class="text-sm text-slate-500">This day has not been closed on the phone yet.</p>
             @endif

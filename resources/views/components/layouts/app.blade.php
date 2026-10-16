@@ -93,11 +93,11 @@
                     <x-icon name="menu" class="size-6" />
                 </button>
                 <div class="min-w-0 flex-1">
-                    <h1 class="truncate text-lg font-bold text-slate-900 sm:text-xl">{{ $title }}</h1>
+                    <h1 class="text-base leading-snug font-bold break-words text-slate-900 sm:text-xl">{{ $title }}</h1>
                     <p class="text-xs text-slate-500">{{ now()->format('l, F j, Y') }}</p>
                 </div>
                 @isset($actions)
-                    <div class="flex flex-wrap items-center gap-2 print:hidden">{{ $actions }}</div>
+                    <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto print:hidden">{{ $actions }}</div>
                 @endisset
             </div>
         </header>

@@ -5,7 +5,7 @@
 
     <section class="mb-8">
         <h2 class="section-title">Today · {{ today()->format('F j, Y') }} · closed days</h2>
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <x-stat label="Total sales" icon="cash" :value="money($today['total_sales'])" tone="brand" :hint="$today['transactions'].' transactions'" />
             <x-stat label="Rice milled" icon="scale" :value="kg($today['kg']).' kg'" :hint="$today['sacks'].' sacks'" />
             <x-stat label="Net" icon="trend" :value="money($today['net'])" tone="success" :hint="'Diesel '.money($today['fuel']).' · Labor '.money($today['labor'])" />
@@ -15,7 +15,7 @@
 
     <section class="mb-8">
         <h2 class="section-title">This month · {{ today()->format('F Y') }}</h2>
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <x-stat label="Total sales" icon="cash" :value="money($month['total_sales'])" tone="brand" :hint="$month['transactions'].' transactions'" />
             <x-stat label="Rice milled" icon="scale" :value="kg($month['kg']).' kg'" :hint="$month['sacks'].' sacks'" />
             <x-stat label="Net" icon="trend" :value="money($month['net'])" tone="success" :hint="'Diesel '.money($month['fuel']).' · Labor '.money($month['labor'])" />
@@ -23,7 +23,7 @@
         </div>
     </section>
 
-    <div class="grid gap-6 lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         <section>
             <h2 class="section-title">Phones</h2>
             <div class="table-wrap">

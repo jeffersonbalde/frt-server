@@ -15,7 +15,7 @@
         </div>
     @endif
 
-    <div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 2xl:grid-cols-5">
+    <div class="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 2xl:grid-cols-5">
         <x-stat label="Total sales" icon="cash" :value="money($totals['total_sales'])" tone="brand" :hint="$totals['days'].' operating days'" />
         <x-stat label="Rice milled" icon="scale" :value="kg($totals['kg']).' kg'" :hint="$totals['sacks'].' sacks · '.$totals['milling_count'].' transactions'" />
         <x-stat label="Avg kg / transaction" icon="chart" :value="$totals['milling_count'] ? kg($totals['kg'] / $totals['milling_count']).' kg' : '—'" />
