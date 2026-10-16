@@ -245,3 +245,12 @@ it('lists voided transactions with the reason, time and who voided them', functi
         ->assertSee('Recorded By')
         ->assertSee($transaction->recorder->name);
 });
+
+it('builds https links behind the hosting proxy (no mixed content)', function () {
+    $this->withHeaders(['X-Forwarded-Proto' => 'https', 'X-Forwarded-Host' => 'frt.example.com', 'X-Forwarded-Port' => '443'])
+        ->get('/login')
+        ->assertOk()
+        ->assertSee('action="https://frt.example.com/login"', false)
+        ->assertSee('https://frt.example.com/images/logo-mark.png', false)
+        ->assertDontSee('http://frt.example.com', false);
+});

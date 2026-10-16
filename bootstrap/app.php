@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'owner' => EnsureUserIsOwner::class,
             'session.limit' => EnsureSessionNotExpired::class,
         ]);
+        // Hosting (e.g. DigitalOcean App Platform) ends HTTPS at its load balancer; trust its X-Forwarded-* headers
+        // so links, assets and form actions are generated as https:// instead of http:// (mixed content).
+        $middleware->trustProxies(at: '*');
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/');
     })
