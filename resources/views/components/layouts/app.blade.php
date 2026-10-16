@@ -76,7 +76,9 @@
                     <span class="block truncate text-sm font-semibold text-slate-900">{{ $user->name }}</span>
                     <span class="block text-xs text-slate-500">Owner</span>
                 </span>
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}"
+                      data-turbo-confirm="You will need to sign in again to use the dashboard."
+                      data-confirm-title="Log out?" data-confirm-button="Log out" data-confirm-tone="danger">
                     @csrf
                     <button type="submit" class="rounded-md p-2 text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600" title="Log out" aria-label="Log out">
                         <x-icon name="logout" class="size-5" />
@@ -103,12 +105,7 @@
         </header>
 
         <main class="mx-auto max-w-7xl animate-content-in px-4 py-6 sm:px-6">
-            @if (session('status'))
-                <div class="mb-6 flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 print:hidden" role="status">
-                    <x-icon name="shield" class="size-5 shrink-0" />
-                    {{ session('status') }}
-                </div>
-            @endif
+            <x-flash />
 
             {{ $slot }}
         </main>

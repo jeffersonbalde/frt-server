@@ -9,6 +9,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-white font-sans text-slate-900 antialiased">
+    <x-flash />
     <div class="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
         {{-- Brand panel --}}
         <section class="relative hidden overflow-hidden bg-brand-700 text-white lg:flex lg:flex-col lg:justify-between lg:p-12">

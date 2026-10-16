@@ -1,5 +1,6 @@
 import './bootstrap';
 import * as Turbo from '@hotwired/turbo';
+import './alerts';
 
 // Turbo loads the next page in the background and swaps it in, so moving between pages never reloads
 // the whole site. Its thin loading bar only appears when a page takes a moment.

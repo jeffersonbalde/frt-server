@@ -26,6 +26,17 @@ it('logs the owner in', function () {
     $this->assertAuthenticatedAs($this->owner);
 });
 
+it('asks before logging out and shows toasts after signing in and out', function () {
+    $this->post('/login', ['username' => 'owner', 'password' => 'password'])->assertRedirect('/');
+    $this->get('/')->assertOk()
+        ->assertSee('data-flash data-type="success" data-message="Welcome back, '.e($this->owner->name).'!"', false)
+        ->assertSee('data-turbo-confirm=', false);
+
+    $this->post('/logout')->assertRedirect('/login');
+    $this->assertGuest();
+    $this->get('/login')->assertSee('data-message="You have been logged out."', false);
+});
+
 it('does not offer "keep me logged in"', function () {
     $this->get('/login')->assertOk()->assertDontSee('name="remember"', false);
 });

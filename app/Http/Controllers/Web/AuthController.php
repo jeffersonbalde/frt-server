@@ -39,7 +39,7 @@ class AuthController extends Controller
         $request->session()->regenerate();
         $request->session()->put(EnsureSessionNotExpired::SESSION_KEY, now()->getTimestamp());
 
-        return redirect()->intended(route('dashboard'));
+        return redirect()->intended(route('dashboard'))->with('status', 'Welcome back, '.$request->user()->name.'!');
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -48,6 +48,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('login')->with('status', 'You have been logged out.');
     }
 }

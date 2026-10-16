@@ -62,6 +62,9 @@
     .btn-secondary {
         @apply border border-slate-300 bg-white text-slate-700 hover:border-brand-600 hover:text-brand-700;
     }
+    .btn-danger {
+        @apply bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600 active:bg-red-800;
+    }
     .input {
         @apply block w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 transition-colors duration-150 placeholder:text-slate-400 focus:border-brand-600 focus:ring-3 focus:ring-brand-100 focus:outline-none;
     }
@@ -112,7 +115,72 @@
     }
 }
 
+/* SweetAlert2 confirmation modal, flat like the rest of the site. */
+.swal2-popup.swal-flat {
+    @apply w-[min(26rem,calc(100vw-2rem))] rounded-lg border border-slate-200 p-6 font-sans shadow-none;
+}
+.swal-flat .swal2-title {
+    @apply p-0 pt-2 text-lg font-bold text-slate-900;
+}
+.swal-flat .swal2-html-container {
+    @apply m-0 mt-2 p-0 text-sm text-slate-600;
+}
+.swal-flat .swal2-icon {
+    @apply mt-0 mb-2 text-xs;
+}
+.swal-flat-actions {
+    @apply mt-6 w-full flex-nowrap gap-2;
+}
+.swal-flat-actions .btn {
+    @apply m-0 flex-1;
+}
+.swal2-container.swal2-backdrop-show {
+    @apply bg-slate-900/40;
+}
+
+/* Toastify notices: white card, colored left edge and icon. */
+.toastify.toast-flat {
+    @apply flex max-w-[calc(100vw-2rem)] items-start gap-3 rounded-lg border border-l-4 border-slate-200 bg-white py-3 pr-3 pl-4 text-sm font-medium text-slate-800 shadow-lg shadow-slate-900/10 sm:max-w-sm;
+    background: #fff;
+    right: 1rem;
+    @media (width < 40rem) {
+        left: 1rem;
+        margin: 0;
+    }
+}
+.toast-flat .toast-body {
+    @apply flex min-w-0 flex-1 items-start gap-2.5;
+}
+.toast-flat .toast-body > svg {
+    @apply mt-px size-5 shrink-0;
+}
+.toast-flat .toast-dismiss {
+    @apply -my-1 ml-1 shrink-0 rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700;
+}
+.toast-flat.toast-success {
+    @apply border-l-green-600;
+}
+.toast-flat.toast-success .toast-body > svg {
+    @apply text-green-600;
+}
+.toast-flat.toast-error {
+    @apply border-l-red-600;
+}
+.toast-flat.toast-error .toast-body > svg {
+    @apply text-red-600;
+}
+.toast-flat.toast-info {
+    @apply border-l-brand-600;
+}
+.toast-flat.toast-info .toast-body > svg {
+    @apply text-brand-600;
+}
+
 @media print {
+    .toastify {
+        display: none;
+    }
+
     @page {
         size: landscape;
         margin: 10mm;

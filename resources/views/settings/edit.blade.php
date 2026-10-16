@@ -45,7 +45,9 @@
         </div>
     </form>
 
-    <form method="POST" action="{{ route('settings.void-code') }}" class="mt-8 max-w-4xl">
+    <form method="POST" action="{{ route('settings.void-code') }}" class="mt-8 max-w-4xl"
+          data-turbo-confirm="Operators will need the new code to void a receipt or reopen a day once their phones sync."
+          data-confirm-title="Change the approval code?" data-confirm-button="Save code">
         @csrf
         @method('PUT')
 
