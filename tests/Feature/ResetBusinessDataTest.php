@@ -17,12 +17,19 @@ beforeEach(function () {
     User::query()->where('role', 'operator')->first()->createToken('device:A');
 });
 
-it('deletes the business records but keeps accounts, personnel and settings', function () {
-    $users = User::query()->count();
+it('deletes the business records and extra accounts but keeps admin, daryl, personnel and settings', function () {
+    User::factory()->owner()->create(['name' => 'Danila Nice Fabriga', 'username' => 'admin']);
+    User::query()->firstOrCreate(
+        ['username' => 'daryl'],
+        ['name' => 'Daryl Fabriga', 'role' => 'operator', 'is_active' => true, 'password' => 'password'],
+    );
+    User::factory()->create(['username' => 'jerry', 'name' => 'Jerry Suezo']);
+
     $personnel = Personnel::query()->count();
     $settings = Setting::values();
     expect(Transaction::query()->count())->toBeGreaterThan(0)
-        ->and(DaySession::query()->count())->toBeGreaterThan(0);
+        ->and(DaySession::query()->count())->toBeGreaterThan(0)
+        ->and(User::query()->count())->toBeGreaterThan(2);
 
     $this->artisan('frt:reset-data', ['--force' => true])
         ->expectsOutputToContain('back to zero')
@@ -33,7 +40,7 @@ it('deletes the business records but keeps accounts, personnel and settings', fu
         ->and(Customer::query()->count())->toBe(0)
         ->and(Device::query()->count())->toBe(0)
         ->and(PersonalAccessToken::query()->count())->toBe(0)
-        ->and(User::query()->count())->toBe($users)
+        ->and(User::query()->orderBy('username')->pluck('username')->all())->toBe(['admin', 'daryl'])
         ->and(Personnel::query()->count())->toBe($personnel)
         ->and(Setting::values())->toBe($settings);
 });
@@ -60,7 +67,10 @@ it('deletes nothing when the owner says no', function () {
 it('shows a dashboard with all zeros afterwards', function () {
     $this->artisan('frt:reset-data', ['--force' => true])->assertSuccessful();
 
-    $owner = User::query()->where('username', 'owner')->first();
+    $owner = User::factory()->owner()->create([
+        'name' => 'Danila Nice Fabriga',
+        'username' => 'admin',
+    ]);
     $this->actingAs($owner)
         ->withSession([EnsureSessionNotExpired::SESSION_KEY => now()->getTimestamp()])
         ->get('/')
