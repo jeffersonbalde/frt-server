@@ -73,7 +73,7 @@
                     <button type="submit" class="btn btn-primary mt-2 w-full py-3 tracking-wide uppercase">Log in</button>
                 </form>
 
-                <p class="mt-10 text-center text-xs text-slate-400">© {{ now()->year }} Fabriga Rice Trading</p>
+                <p class="mt-10 text-center text-xs text-slate-400">© {{ now()->year }} Fabriga Rice Trading · <a href="{{ route('privacy') }}" class="hover:text-brand-600 hover:underline">Privacy Policy</a></p>
             </div>
         </main>
     </div>

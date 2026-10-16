@@ -39,6 +39,15 @@ it('asks before logging out and shows toasts after signing in and out', function
     $this->get('/login')->assertSee('data-message="You have been logged out."', false);
 });
 
+it('shows the privacy policy to anyone, linked from the login page', function () {
+    $this->get('/privacy')->assertOk()
+        ->assertSee('Privacy Policy')
+        ->assertSee('Fabriga Rice Trading')
+        ->assertSee('We do not sell, rent or share');
+
+    $this->get('/login')->assertSee(route('privacy'), false);
+});
+
 it('does not offer "keep me logged in"', function () {
     $this->get('/login')->assertOk()->assertDontSee('name="remember"', false);
 });

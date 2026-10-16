@@ -6,11 +6,14 @@ use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\DayClosingController;
 use App\Http\Controllers\Web\DeviceController;
 use App\Http\Controllers\Web\PersonnelController;
+use App\Http\Controllers\Web\PrivacyController;
 use App\Http\Controllers\Web\ReportController;
 use App\Http\Controllers\Web\SettingController;
 use App\Http\Controllers\Web\UserController;
 use App\Http\Controllers\Web\VoidController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/privacy', PrivacyController::class)->name('privacy');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'create'])->name('login');
