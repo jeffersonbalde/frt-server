@@ -1,0 +1,124 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+    --color-brand-50: #eff6ff;
+    --color-brand-100: #dbeafe;
+    --color-brand-600: #1d4ed8;
+    --color-brand-700: #1e40af;
+    --color-brand-800: #1e3a8a;
+    --color-brand-900: #172554;
+    --color-gold: #fbbf24;
+
+    /* Gentle entrance for page content: fades in with a tiny lift. Only the content moves;
+       the sidebar and top bar stay still, so changing pages never flashes the whole screen. */
+    --animate-content-in: content-in 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+
+    @keyframes content-in {
+        from {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+}
+
+/* Turbo's loading bar, in the brand blue. */
+.turbo-progress-bar {
+    height: 2px;
+    background-color: var(--color-brand-600);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+@layer components {
+    /* Flat surfaces: thin border, no shadow, small radius. */
+    .card {
+        @apply rounded-lg border border-slate-200 bg-white p-5;
+    }
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:opacity-50;
+    }
+    .btn-primary {
+        @apply bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800;
+    }
+    .btn-secondary {
+        @apply border border-slate-300 bg-white text-slate-700 hover:border-brand-600 hover:text-brand-700;
+    }
+    .input {
+        @apply block w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 transition-colors duration-150 placeholder:text-slate-400 focus:border-brand-600 focus:ring-3 focus:ring-brand-100 focus:outline-none;
+    }
+    /* A field with a problem: red border (set by app.js from the server's or the browser's check). */
+    .input[aria-invalid='true'] {
+        @apply border-red-500 focus:border-red-500 focus:ring-red-100;
+    }
+    .label {
+        @apply mb-1.5 block text-sm font-medium text-slate-700;
+    }
+    .table-wrap {
+        @apply overflow-x-auto rounded-lg border border-slate-200 bg-white;
+    }
+    .table {
+        @apply min-w-full text-sm;
+    }
+    .table th {
+        @apply border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-left text-xs font-semibold tracking-wide whitespace-nowrap text-slate-500 uppercase;
+    }
+    .table td {
+        @apply px-4 py-2.5 whitespace-nowrap text-slate-700;
+    }
+    .table tbody tr {
+        @apply border-t border-slate-100 transition-colors duration-100 first:border-t-0 hover:bg-brand-50/50;
+    }
+    .table tfoot td {
+        @apply border-t border-slate-200 bg-slate-50 font-semibold text-slate-900;
+    }
+    .num {
+        @apply text-right tabular-nums;
+    }
+    /* Row number, the first column of every table. */
+    .table th.col-no,
+    .table td.col-no {
+        @apply w-12 pr-0 text-center tabular-nums;
+    }
+    .badge {
+        @apply inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold;
+    }
+    .section-title {
+        @apply mb-3 text-xs font-semibold tracking-wider text-slate-500 uppercase;
+    }
+    .nav-link {
+        @apply relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900;
+    }
+    .nav-link-active {
+        @apply bg-brand-50 text-brand-700 hover:bg-brand-50 hover:text-brand-700 before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-r before:bg-brand-600;
+    }
+}
+
+@media print {
+    @page {
+        size: landscape;
+        margin: 10mm;
+    }
+    .table td,
+    .table th {
+        @apply px-1 py-1 text-[10px];
+    }
+}
