@@ -17,7 +17,7 @@
 
     <div class="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 2xl:grid-cols-5">
         <x-stat label="Total sales" icon="cash" :value="money($totals['total_sales'])" tone="brand" :hint="$totals['days'].' operating days'" />
-        <x-stat label="Rice milled" icon="scale" :value="kg($totals['kg']).' kg'" :hint="$totals['sacks'].' sacks · '.$totals['milling_count'].' transactions'" />
+        <x-stat label="Rice milled" icon="scale" :value="kg($totals['kg']).' kg'" :hint="number_format($totals['sacks']).' sacks · '.$totals['milling_count'].' transactions'" />
         <x-stat label="Avg kg / transaction" icon="chart" :value="$totals['milling_count'] ? kg($totals['kg'] / $totals['milling_count']).' kg' : '—'" />
         <x-stat label="Net amount" icon="trend" :value="money($totals['net'])" tone="success" :hint="'Avg '.($totals['milling_count'] ? money(intdiv($totals['net'], $totals['milling_count'])) : '—').' / milling'" />
         <x-stat label="Total variance" icon="alert" :value="money($totals['variance'])" :tone="$totals['variance'] === 0 ? 'default' : 'danger'" />
@@ -53,7 +53,7 @@
                         <td><a href="{{ route('reports.daily', ['date' => $row['date']->toDateString()]) }}" class="text-brand-600 hover:underline">{{ $row['date']->format('M j, D') }}</a></td>
                         <td class="num">{{ $row['customers'] }}</td>
                         <td class="num">{{ $row['locations'] }}</td>
-                        <td class="num">{{ $row['sacks'] }}</td>
+                        <td class="num">{{ number_format($row['sacks']) }}</td>
                         <td class="num">{{ kg($row['kg']) }}</td>
                         <td class="num">{{ money($row['milling_gross']) }}</td>
                         <td class="num">({{ money($row['tahop_bought'], false) }})</td>
@@ -76,7 +76,7 @@
                     <tr>
                         <td colspan="2">Total</td>
                         <td colspan="2"></td>
-                        <td class="num">{{ $totals['sacks'] }}</td>
+                        <td class="num">{{ number_format($totals['sacks']) }}</td>
                         <td class="num">{{ kg($totals['kg']) }}</td>
                         <td class="num">{{ money($totals['milling_gross']) }}</td>
                         <td class="num">({{ money($totals['tahop_bought'], false) }})</td>

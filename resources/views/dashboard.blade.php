@@ -7,7 +7,7 @@
         <h2 class="section-title">Today · {{ today()->format('F j, Y') }} · closed days</h2>
         <div class="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <x-stat label="Total sales" icon="cash" :value="money($today['total_sales'])" tone="brand" :hint="$today['transactions'].' transactions'" />
-            <x-stat label="Rice milled" icon="scale" :value="kg($today['kg']).' kg'" :hint="$today['sacks'].' sacks'" />
+            <x-stat label="Rice milled" icon="scale" :value="kg($today['kg']).' kg'" :hint="number_format($today['sacks']).' sacks'" />
             <x-stat label="Net" icon="trend" :value="money($today['net'])" tone="success" :hint="'Diesel '.money($today['fuel']).' · Labor '.money($today['labor'])" />
             <x-stat label="Variance" icon="alert" :value="money($today['variance'])" :tone="$today['variance'] === 0 ? 'default' : 'danger'" hint="From closed End of Day" />
         </div>
@@ -17,7 +17,7 @@
         <h2 class="section-title">This month · {{ today()->format('F Y') }}</h2>
         <div class="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <x-stat label="Total sales" icon="cash" :value="money($month['total_sales'])" tone="brand" :hint="$month['transactions'].' transactions'" />
-            <x-stat label="Rice milled" icon="scale" :value="kg($month['kg']).' kg'" :hint="$month['sacks'].' sacks'" />
+            <x-stat label="Rice milled" icon="scale" :value="kg($month['kg']).' kg'" :hint="number_format($month['sacks']).' sacks'" />
             <x-stat label="Net" icon="trend" :value="money($month['net'])" tone="success" :hint="'Diesel '.money($month['fuel']).' · Labor '.money($month['labor'])" />
             <x-stat label="Tahop on hand" icon="leaf" :value="kg(max(0, $tahop['kg_on_hand'])).' kg'" :hint="'Income this month '.money($month['tahop_income']).' · taken '.kg($tahop['kg_taken']).' kg · sold '.kg($tahop['kg_sold']).' kg'" />
         </div>

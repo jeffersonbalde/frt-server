@@ -22,7 +22,7 @@
 
     <div class="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 2xl:grid-cols-5">
         <x-stat label="Total sales" icon="cash" :value="money($totals['total_sales'])" tone="brand" :hint="'Milling cash '.money($totals['milling_cash']).' + tahop income '.money($totals['tahop_income'])" />
-        <x-stat label="Rice milled" icon="scale" :value="kg($totals['kg']).' kg'" :hint="$totals['sacks'].' sacks · '.$totals['milling_count'].' customers'" />
+        <x-stat label="Rice milled" icon="scale" :value="kg($totals['kg']).' kg'" :hint="number_format($totals['sacks']).' sacks · '.$totals['milling_count'].' customers'" />
         <x-stat label="Tahop" icon="leaf" :value="money($totals['tahop_income'])" :hint="'Income · sold '.kg($totals['tahop_kg_sold']).' kg · taken '.kg($totals['tahop_kg_bought']).' kg'" />
         <x-stat label="Diesel + Labor" icon="team" :value="money($totals['fuel'] + $totals['labor'])" :hint="'Diesel '.money($totals['fuel']).' · Labor '.money($totals['labor'])" />
         <x-stat label="Net amount" icon="trend" :value="money($totals['net'])" tone="success" />
@@ -97,7 +97,7 @@
                 <tfoot>
                     <tr>
                         <td colspan="7">Total (valid only)</td>
-                        <td class="num">{{ $totals['sacks'] }}</td>
+                        <td class="num">{{ number_format($totals['sacks']) }}</td>
                         <td class="num">{{ kg($totals['kg']) }}</td>
                         <td></td>
                         <td class="num">{{ money($totals['milling_gross'] + $totals['tahop_sales']) }}</td>
