@@ -26,7 +26,7 @@ class SyncController extends Controller
             ...$result,
             'device' => ['uuid' => $device->uuid, 'code' => $device->code],
             'user' => $request->user()->toApiArray(),
-            ...$this->sync->referenceData($request->validated('customers_since')),
+            ...$this->sync->referenceData($request->validated('customers_since'), $request->validated('database_id')),
         ]);
     }
 }

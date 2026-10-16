@@ -157,13 +157,39 @@ it('shares customers between phones', function () {
         'username' => 'daryl', 'password' => 'secret123', 'device_uuid' => $otherDevice,
     ]);
 
-    $login->assertJsonPath('customers.0.name', 'Layla Gay');
+    $login->assertJsonPath('customers.0.name', 'Layla Gay')->assertJsonPath('customers_full', true);
 
     $this->withToken($login->json('token'))->postJson('/api/sync', [
         'device_uuid' => $otherDevice,
         'customers_since' => $login->json('server_time'),
+        'database_id' => $login->json('database_id'),
         'customers' => [], 'day_sessions' => [], 'transactions' => [],
-    ])->assertOk()->assertJsonCount(0, 'customers');
+    ])->assertOk()->assertJsonCount(0, 'customers')->assertJsonPath('customers_full', false);
+});
+
+it('sends every customer again when the server data was reset, so phones do not show them twice', function () {
+    $this->withToken($this->token)->postJson('/api/sync', pptSampleBatch($this->deviceUuid, $this->operator->id))->assertOk();
+    $first = $this->withToken($this->token)->postJson('/api/sync', [
+        'device_uuid' => $this->deviceUuid, 'customers_since' => null,
+        'customers' => [], 'day_sessions' => [], 'transactions' => [],
+    ])->assertOk();
+    $databaseId = $first->json('database_id');
+    expect($databaseId)->toBeString()->not->toBeEmpty();
+
+    $since = ['device_uuid' => $this->deviceUuid, 'customers_since' => $first->json('server_time'),
+        'customers' => [], 'day_sessions' => [], 'transactions' => []];
+
+    // Same data on the server: only changes are sent.
+    $this->withToken($this->token)->postJson('/api/sync', [...$since, 'database_id' => $databaseId])
+        ->assertOk()->assertJsonCount(0, 'customers')->assertJsonPath('customers_full', false);
+
+    // A phone that never saw an ID (older app) or saw another server's ID gets the whole list.
+    $this->withToken($this->token)->postJson('/api/sync', [...$since, 'database_id' => 'some-other-server'])
+        ->assertOk()->assertJsonCount(Customer::query()->count(), 'customers')->assertJsonPath('customers_full', true);
+
+    // After frt:reset-data the ID changes.
+    Setting::renewDatabaseId();
+    expect(Setting::databaseId())->not->toBe($databaseId);
 });
 
 it('signs out a deactivated operator on the next sync', function () {

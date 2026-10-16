@@ -49,6 +49,7 @@ class SyncRequest extends FormRequest
         return [
             'device_uuid' => ['required', 'uuid'],
             'customers_since' => ['nullable', 'date'],
+            'database_id' => ['nullable', 'string', 'max:64'],
 
             'customers' => ['present', 'array', "max:$max"],
             'customers.*.uuid' => ['required', 'uuid'],

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Setting extends Model
 {
@@ -92,6 +93,22 @@ class Setting extends Model
         ] as $key => $value) {
             static::query()->updateOrCreate(['key' => $key], ['value' => $value]);
         }
+    }
+
+    /**
+     * A random ID for this copy of the business data. Phones remember it; when it changes (a fresh
+     * database, `frt:reset-data`, or a different server) they replace their customer list with the
+     * server's instead of keeping old copies next to new ones.
+     */
+    public static function databaseId(): string
+    {
+        return (string) static::query()->firstOrCreate(['key' => 'database_id'], ['value' => (string) Str::uuid()])->value;
+    }
+
+    /** Give the business data a new ID, so every phone refreshes its customer list on the next sync. */
+    public static function renewDatabaseId(): void
+    {
+        static::query()->updateOrCreate(['key' => 'database_id'], ['value' => (string) Str::uuid()]);
     }
 
     /**

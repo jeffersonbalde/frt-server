@@ -20,7 +20,7 @@ beforeEach(function () {
 it('deletes the business records but keeps accounts, personnel and settings', function () {
     $users = User::query()->count();
     $personnel = Personnel::query()->count();
-    $settings = Setting::query()->count();
+    $settings = Setting::values();
     expect(Transaction::query()->count())->toBeGreaterThan(0)
         ->and(DaySession::query()->count())->toBeGreaterThan(0);
 
@@ -35,7 +35,7 @@ it('deletes the business records but keeps accounts, personnel and settings', fu
         ->and(PersonalAccessToken::query()->count())->toBe(0)
         ->and(User::query()->count())->toBe($users)
         ->and(Personnel::query()->count())->toBe($personnel)
-        ->and(Setting::query()->count())->toBe($settings);
+        ->and(Setting::values())->toBe($settings);
 });
 
 it('can keep the customer list', function () {

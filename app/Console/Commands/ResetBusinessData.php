@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Customer;
 use App\Models\DaySession;
 use App\Models\Device;
+use App\Models\Setting;
 use App\Models\Transaction;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -51,6 +52,8 @@ class ResetBusinessData extends Command
             }
             PersonalAccessToken::query()->delete();
             Device::query()->delete();
+            // Phones that still hold old data replace their customer list on their next sync.
+            Setting::renewDatabaseId();
         });
 
         $this->info('Done. The system is back to zero.');

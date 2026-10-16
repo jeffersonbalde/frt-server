@@ -107,14 +107,20 @@ class SyncService
     /**
      * Settings, active personnel, and customers changed since the given time.
      *
+     * The phone also sends the database ID it last saw. If there is none, or it no longer matches (the
+     * server data was reset or the phone moved to another server), every customer is sent with
+     * `customers_full`, so the phone can drop its old copies instead of showing each customer twice.
+     *
      * @return array<string, mixed>
      */
-    public function referenceData(?string $customersSince): array
+    public function referenceData(?string $customersSince, ?string $databaseId = null): array
     {
         $serverTime = now();
+        $currentDatabaseId = Setting::databaseId();
+        $full = $customersSince === null || $databaseId !== $currentDatabaseId;
 
         $customers = Customer::query()
-            ->when($customersSince, fn ($query) => $query->where('updated_at', '>', $this->toAppTime($customersSince)))
+            ->when(! $full, fn ($query) => $query->where('updated_at', '>', $this->toAppTime($customersSince)))
             ->orderBy('id')
             ->get()
             ->map(fn (Customer $customer) => $customer->toSyncArray())
@@ -130,6 +136,8 @@ class SyncService
                 ->get(['id', 'name', 'position'])
                 ->toArray(),
             'customers' => $customers,
+            'customers_full' => $full,
+            'database_id' => $currentDatabaseId,
             'server_time' => $serverTime->toIso8601ZuluString('millisecond'),
         ];
     }
