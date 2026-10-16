@@ -7,8 +7,10 @@ use App\Models\Personnel;
 use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Support\ExcelExport;
 use Database\Seeders\DemoDataSeeder;
 use Illuminate\Support\Str;
+use OpenSpout\Reader\XLSX\Reader;
 
 beforeEach(function () {
     $this->seed();
@@ -118,18 +120,62 @@ it('shows the PPT sample yesterday and leaves today empty for a live demo', func
         ->assertSee('₱236.00');
 });
 
-it('exports the daily and monthly reports as CSV', function () {
+it('exports the daily and monthly reports as Excel files with real dates and numbers', function () {
     $this->seed(DemoDataSeeder::class);
 
-    $yesterday = today()->subDay()->toDateString();
-    $daily = $this->actingAs($this->owner)->get('/reports/daily/export?date='.$yesterday);
-    $daily->assertOk()->assertDownload('frt-daily-'.$yesterday.'.csv');
-    expect($daily->streamedContent())->toContain('Trans. No')->toContain('Recorded By')->toContain('2484.00');
+    $yesterday = today()->subDay();
+    $daily = $this->actingAs($this->owner)->get('/reports/daily/export?date='.$yesterday->toDateString());
+    $daily->assertOk()->assertDownload('frt-daily-'.$yesterday->toDateString().'.xlsx');
+    $rows = readXlsx($daily->baseResponse->getFile()->getPathname());
+
+    expect($rows[0])->toContain('Trans. No', 'Recorded By')
+        ->and($rows[1][1])->toBeInstanceOf(DateTimeInterface::class)
+        ->and($rows[1][1]->format('Y-m-d'))->toBe($yesterday->toDateString())
+        ->and(collect($rows)->flatten()->contains(fn ($value) => (is_int($value) || is_float($value)) && (float) $value === 2484.0))->toBeTrue()
+        ->and(end($rows)[0])->toStartWith('Total');
 
     $monthly = $this->actingAs($this->owner)->get('/reports/monthly/export');
-    $monthly->assertOk();
-    expect($monthly->streamedContent())->toContain('Total Qty. Kg');
+    $monthly->assertOk()->assertDownload('frt-monthly-'.today()->format('Y-m').'.xlsx');
+    $rows = readXlsx($monthly->baseResponse->getFile()->getPathname());
+
+    expect($rows[0])->toContain('Date', 'Total Qty. Kg')
+        ->and($rows[1][0])->toBeInstanceOf(DateTimeInterface::class)
+        ->and($rows[1][5])->toBeNumeric()->not->toBeString()
+        ->and(end($rows)[0])->toBe('Total');
 });
+
+it('makes every Excel column wide enough for its contents', function () {
+    $path = tempnam(sys_get_temp_dir(), 'frt-test-');
+    (new ExcelExport('Test', [['Date', 'date'], ['Total Sales', 'money']], [[now(), 13678200000.00]]))->writeTo($path);
+
+    $zip = new ZipArchive;
+    $zip->open($path);
+    $sheet = $zip->getFromName('xl/worksheets/sheet1.xml');
+    $zip->close();
+    unlink($path);
+
+    preg_match_all('/<col min="\d+" max="\d+" width="([\d.]+)"/', $sheet, $widths);
+    expect($widths[1])->toHaveCount(2)
+        ->and(array_map(floatval(...), $widths[1]))->each->toBeGreaterThanOrEqual(19);
+});
+
+/**
+ * @return list<list<mixed>>
+ */
+function readXlsx(string $path): array
+{
+    $reader = new Reader;
+    $reader->open($path);
+    $rows = [];
+    foreach ($reader->getSheetIterator() as $sheet) {
+        foreach ($sheet->getRowIterator() as $row) {
+            $rows[] = $row->toArray();
+        }
+    }
+    $reader->close();
+
+    return $rows;
+}
 
 it('saves settings in centavos', function () {
     $this->actingAs($this->owner)->put('/settings', [

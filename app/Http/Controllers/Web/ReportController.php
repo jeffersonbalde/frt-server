@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use App\Services\ReportService;
+use App\Support\ExcelExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ReportController extends Controller
 {
@@ -21,16 +22,19 @@ class ReportController extends Controller
         return view('reports.daily', ['date' => $date, ...$this->reports->daily($date)]);
     }
 
-    public function dailyExport(Request $request): StreamedResponse
+    public function dailyExport(Request $request): BinaryFileResponse
     {
         $date = $this->date($request);
         $report = $this->reports->daily($date);
         $operators = $report['operators'];
 
-        $header = [
-            'Trans. No', 'Date', 'Time', 'Device', 'Recorded By', 'Customer Name', 'Location', 'Service', 'No. of Sack', 'Qty. Kg',
-            'Rate per Kg', 'Total Amount', 'Tahop Kg Taken', 'Tahop Taken', 'Adjustment', 'Amount Paid', 'Cash',
-            'Change', 'Sales', 'Diesel/Other Charges', ...array_map(fn ($name) => "$name (labor)", $operators), 'Net Amount', 'Status',
+        $columns = [
+            ['Trans. No', 'text'], ['Date', 'date'], ['Time', 'time'], ['Device', 'text'], ['Recorded By', 'text'],
+            ['Customer Name', 'text'], ['Location', 'text'], ['Service', 'text'], ['No. of Sack', 'int'], ['Qty. Kg', 'decimal'],
+            ['Rate per Kg', 'rate'], ['Total Amount', 'money'], ['Tahop Kg Taken', 'decimal'], ['Tahop Taken', 'money'],
+            ['Adjustment', 'money'], ['Amount Paid', 'money'], ['Cash', 'money'], ['Change', 'money'], ['Sales', 'money'],
+            ['Diesel/Other Charges', 'money'], ...array_map(fn ($name) => ["$name (labor)", 'money'], $operators),
+            ['Net Amount', 'money'], ['Status', 'text'],
         ];
 
         $rows = $report['rows']->map(function (array $row) use ($operators) {
@@ -39,8 +43,8 @@ class ReportController extends Controller
 
             return [
                 $transaction->receipt_no,
-                $transaction->business_date->toDateString(),
-                $transaction->recorded_at->format('h:i A'),
+                $transaction->business_date,
+                $transaction->recorded_at,
                 $transaction->device->code,
                 $transaction->recorder?->name,
                 $transaction->customer_name,
@@ -48,25 +52,28 @@ class ReportController extends Controller
                 $transaction->typeLabel(),
                 $transaction->sack_count,
                 $transaction->total_kg,
-                money_plain($transaction->rate),
-                money_plain($transaction->gross),
+                $this->pesos($transaction->rate),
+                $this->pesos($transaction->gross),
                 $transaction->tahop_kg,
-                money_plain($transaction->tahop_offset),
-                money_plain($transaction->adjustment),
-                money_plain($transaction->amount_due),
-                money_plain($transaction->cash),
-                money_plain($transaction->change),
-                money_plain($row['sales']),
-                money_plain($transaction->fuel),
-                ...array_map(fn ($name) => money_plain($row['shares'][$name] ?? 0), $operators),
-                money_plain($transaction->net),
+                $this->pesos($transaction->tahop_offset),
+                $this->pesos($transaction->adjustment),
+                $this->pesos($transaction->amount_due),
+                $this->pesos($transaction->cash),
+                $this->pesos($transaction->change),
+                $this->pesos($row['sales']),
+                $this->pesos($transaction->fuel),
+                ...array_map(fn ($name) => $this->pesos($row['shares'][$name] ?? 0), $operators),
+                $this->pesos($transaction->net),
                 $transaction->status === 'valid'
                     ? 'Valid'
                     : trim('Void: '.$transaction->void_reason.' ('.$transaction->voided_at?->format('h:i A').($transaction->voider ? ', by '.$transaction->voider->name : '').')'),
             ];
         });
 
-        return $this->csv("frt-daily-{$date->toDateString()}.csv", $header, $rows->all());
+        $valid = $report['rows']->map(fn (array $row) => $row['transaction']->status === 'valid');
+
+        return (new ExcelExport("Daily {$date->format('M j, Y')}", $columns, $rows->all(), $valid->all()))
+            ->download("frt-daily-{$date->toDateString()}.xlsx");
     }
 
     public function monthly(Request $request): View
@@ -76,38 +83,41 @@ class ReportController extends Controller
         return view('reports.monthly', ['month' => $month, ...$this->reports->monthly($month)]);
     }
 
-    public function monthlyExport(Request $request): StreamedResponse
+    public function monthlyExport(Request $request): BinaryFileResponse
     {
         $month = $this->month($request);
         $report = $this->reports->monthly($month);
 
-        $header = [
-            'Date', 'No. of Customer', 'No. of Location', 'Transactions', 'Total No. of Sack', 'Total Qty. Kg',
-            'Milling Amount', 'Tahop Taken', 'Adjustments', 'Milling Cash', 'Tahop Sales', 'Tahop Income', 'Total Sales',
-            'Diesel/Other Charges', 'Labor', 'Net Amount', 'Total Variance',
+        $columns = [
+            ['Date', 'date'], ['No. of Customer', 'int'], ['No. of Location', 'int'], ['Transactions', 'int'],
+            ['Total No. of Sack', 'int'], ['Total Qty. Kg', 'decimal'], ['Milling Amount', 'money'], ['Tahop Taken', 'money'],
+            ['Adjustments', 'money'], ['Milling Cash', 'money'], ['Tahop Sales', 'money'], ['Tahop Income', 'money'],
+            ['Total Sales', 'money'], ['Diesel/Other Charges', 'money'], ['Labor', 'money'], ['Net Amount', 'money'],
+            ['Total Variance', 'money'],
         ];
 
         $rows = $report['rows']->map(fn (array $row) => [
-            $row['date']->toDateString(),
+            $row['date'],
             $row['customers'],
             $row['locations'],
             $row['transactions'],
             $row['sacks'],
             $row['kg'],
-            money_plain($row['milling_gross']),
-            money_plain($row['tahop_bought']),
-            money_plain($row['adjustments']),
-            money_plain($row['milling_cash']),
-            money_plain($row['tahop_sales']),
-            money_plain($row['tahop_income']),
-            money_plain($row['total_sales']),
-            money_plain($row['fuel']),
-            money_plain($row['labor']),
-            money_plain($row['net']),
-            money_plain($row['variance']),
+            $this->pesos($row['milling_gross']),
+            $this->pesos($row['tahop_bought']),
+            $this->pesos($row['adjustments']),
+            $this->pesos($row['milling_cash']),
+            $this->pesos($row['tahop_sales']),
+            $this->pesos($row['tahop_income']),
+            $this->pesos($row['total_sales']),
+            $this->pesos($row['fuel']),
+            $this->pesos($row['labor']),
+            $this->pesos($row['net']),
+            $this->pesos($row['variance']),
         ]);
 
-        return $this->csv("frt-monthly-{$month->format('Y-m')}.csv", $header, $rows->all());
+        return (new ExcelExport($month->format('F Y'), $columns, $rows->values()->all()))
+            ->download("frt-monthly-{$month->format('Y-m')}.xlsx");
     }
 
     private function date(Request $request): Carbon
@@ -124,22 +134,9 @@ class ReportController extends Controller
         return isset($validated['month']) ? Carbon::createFromFormat('Y-m-d', $validated['month'].'-01')->startOfDay() : today()->startOfMonth();
     }
 
-    /**
-     * @param  list<string>  $header
-     * @param  list<list<mixed>>  $rows
-     */
-    private function csv(string $filename, array $header, array $rows): StreamedResponse
+    /** Centavos as pesos, for Excel. */
+    private function pesos(int|float|null $centavos): float
     {
-        return response()->streamDownload(function () use ($header, $rows) {
-            $handle = fopen('php://output', 'w');
-            fwrite($handle, "\xEF\xBB\xBF");
-            fputcsv($handle, $header, escape: '');
-
-            foreach ($rows as $row) {
-                fputcsv($handle, $row, escape: '');
-            }
-
-            fclose($handle);
-        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+        return round(((int) ($centavos ?? 0)) / 100, 2);
     }
 }

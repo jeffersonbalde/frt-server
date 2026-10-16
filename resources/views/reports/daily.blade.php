@@ -3,7 +3,7 @@
         <form method="GET" action="{{ route('reports.daily') }}" class="flex items-center gap-2">
             <input type="date" name="date" value="{{ $date->toDateString() }}" class="input w-auto" onchange="this.form.requestSubmit()">
         </form>
-        <a href="{{ route('reports.daily.export', ['date' => $date->toDateString()]) }}" class="btn btn-secondary" data-turbo="false">Export CSV</a>
+        <a href="{{ route('reports.daily.export', ['date' => $date->toDateString()]) }}" class="btn btn-secondary" data-turbo="false">Export Excel</a>
         <button type="button" onclick="window.print()" class="btn btn-secondary">Print / PDF</button>
     </x-slot:actions>
 

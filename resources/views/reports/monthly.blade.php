@@ -3,7 +3,7 @@
         <form method="GET" action="{{ route('reports.monthly') }}" class="flex items-center gap-2">
             <input type="month" name="month" value="{{ $month->format('Y-m') }}" class="input w-auto" onchange="this.form.requestSubmit()">
         </form>
-        <a href="{{ route('reports.monthly.export', ['month' => $month->format('Y-m')]) }}" class="btn btn-secondary" data-turbo="false">Export CSV</a>
+        <a href="{{ route('reports.monthly.export', ['month' => $month->format('Y-m')]) }}" class="btn btn-secondary" data-turbo="false">Export Excel</a>
         <button type="button" onclick="window.print()" class="btn btn-secondary">Print / PDF</button>
     </x-slot:actions>
 
