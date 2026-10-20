@@ -132,7 +132,7 @@ it('exports the labor shares as an Excel file', function () {
 
     $this->actingAs($this->owner)->get('/reports/labor/export?from=2026-10-16&to=2026-10-31')
         ->assertOk()
-        ->assertDownload('frt-labor-2026-10-16-to-2026-10-31.xlsx');
+        ->assertDownload('frt-labor-report-2026-10-16-to-2026-10-31.xlsx');
 });
 
 it('keeps the labor page for the owner only', function () {

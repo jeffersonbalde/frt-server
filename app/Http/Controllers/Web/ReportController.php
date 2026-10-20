@@ -152,7 +152,7 @@ class ReportController extends Controller
         ], $report['days']);
 
         return (new ExcelExport("Labor {$from->format('M j')} - {$to->format('M j, Y')}", $columns, $rows))
-            ->download("frt-labor-{$from->toDateString()}-to-{$to->toDateString()}.xlsx");
+            ->download("frt-labor-report-{$from->toDateString()}-to-{$to->toDateString()}.xlsx");
     }
 
     /**

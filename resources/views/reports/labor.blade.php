@@ -4,7 +4,7 @@
     $names = array_column($operators, 'name');
 @endphp
 
-<x-layouts.app title="Labor Shares">
+<x-layouts.app title="Labor Report">
     <x-slot:actions>
         <a href="{{ route('reports.labor.export', $query) }}" class="btn btn-secondary" data-turbo="false">Export Excel</a>
         <button type="button" onclick="window.print()" class="btn btn-secondary">Print / PDF</button>
@@ -57,7 +57,7 @@
                     <th class="col-no">#</th>
                     <th>Operator</th>
                     <th class="num">Days on duty</th>
-                    <th class="num">Labor share</th>
+                    <th class="num">Labor</th>
                 </tr>
             </thead>
             <tbody>
