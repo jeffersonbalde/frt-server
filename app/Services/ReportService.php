@@ -157,13 +157,13 @@ class ReportService
     }
 
     /**
-     * Labor share per operator between two dates (inclusive), e.g. a kinsenas or a week.
+     * Labor share per operator between two dates (inclusive), e.g. a week or a pay period.
      *
-     * Each valid transaction's labor is split equally among the operators on duty that day, exactly as on the
-     * Daily Report. Days that went through End of Day are final; days still open are included but kept apart
-     * as "not final", because their amounts can still change.
+     * Only days that went through End of Day are counted, like the other reports. Each valid transaction's
+     * labor is split equally among the operators on duty that day, exactly as on the Daily Report. Dates
+     * that still have a day open are listed in `open_dates` so the page can say they are not counted yet.
      *
-     * @return array{operators: list<array{name: string, days: int, final: int, pending: int, total: int}>, days: list<array{date: Carbon, final: bool, shares: array<string, int>, total: int}>, totals: array{final: int, pending: int, total: int}, open_dates: list<Carbon>}
+     * @return array{operators: list<array{name: string, days: int, share: int}>, days: list<array{date: Carbon, shares: array<string, int>, total: int}>, total: int, open_dates: list<Carbon>}
      */
     public function laborShares(Carbon $from, Carbon $to): array
     {
@@ -171,25 +171,18 @@ class ReportService
         $inRange = fn (Builder $query) => $query->whereDate('business_date', '>=', $from)->whereDate('business_date', '<=', $to);
 
         $sessions = DaySession::query()->where($inRange)->get();
-        $transactions = Transaction::query()
+        $transactions = $this->closedDayTransactions()
             ->with('daySession')
             ->valid()
             ->where($inRange)
             ->get();
 
-        // A day is final once every phone that worked that day has closed it.
-        $openDates = $sessions->where('status', 'open')
-            ->map(fn (DaySession $session) => $session->business_date->toDateString())
-            ->unique()
-            ->sort()
-            ->values();
-
         /** @var array<string, array<string, int>> $byDate date => operator => share */
         $byDate = [];
-        /** @var array<string, array<string, true>> $dutyDates operator => dates on duty */
+        /** @var array<string, array<string, true>> $dutyDates operator => closed dates on duty */
         $dutyDates = [];
 
-        foreach ($sessions as $session) {
+        foreach ($sessions->where('status', 'closed') as $session) {
             $date = $session->business_date->toDateString();
             $byDate[$date] ??= [];
             foreach ($session->operatorNames() as $name) {
@@ -208,20 +201,17 @@ class ReportService
         }
 
         ksort($byDate);
-        $open = array_flip($openDates->all());
 
         $days = [];
         $operators = [];
 
         foreach ($byDate as $date => $shares) {
             ksort($shares);
-            $final = ! isset($open[$date]);
-            $days[] = ['date' => Carbon::parse($date), 'final' => $final, 'shares' => $shares, 'total' => array_sum($shares)];
+            $days[] = ['date' => Carbon::parse($date), 'shares' => $shares, 'total' => array_sum($shares)];
 
             foreach ($shares as $name => $share) {
-                $operators[$name] ??= ['name' => $name, 'days' => count($dutyDates[$name] ?? []), 'final' => 0, 'pending' => 0, 'total' => 0];
-                $operators[$name][$final ? 'final' : 'pending'] += $share;
-                $operators[$name]['total'] += $share;
+                $operators[$name] ??= ['name' => $name, 'days' => count($dutyDates[$name] ?? []), 'share' => 0];
+                $operators[$name]['share'] += $share;
             }
         }
 
@@ -231,12 +221,14 @@ class ReportService
         return [
             'operators' => $operators,
             'days' => $days,
-            'totals' => [
-                'final' => array_sum(array_column($operators, 'final')),
-                'pending' => array_sum(array_column($operators, 'pending')),
-                'total' => array_sum(array_column($operators, 'total')),
-            ],
-            'open_dates' => $openDates->map(fn (string $date) => Carbon::parse($date))->all(),
+            'total' => array_sum(array_column($operators, 'share')),
+            'open_dates' => $sessions->where('status', 'open')
+                ->map(fn (DaySession $session) => $session->business_date->toDateString())
+                ->unique()
+                ->sort()
+                ->map(fn (string $date) => Carbon::parse($date))
+                ->values()
+                ->all(),
         ];
     }
 

@@ -38,40 +38,26 @@
         </div>
     </div>
 
-    <p class="mb-4 text-sm text-slate-600">
-        <span class="font-semibold text-slate-800">{{ $period }}</span> · all phones · Labor = 30% of sales after 10% diesel,
-        split equally among the operators on duty each day. Voided transactions are not included.
+    <p class="mb-2 text-sm text-slate-600">
+        <span class="font-semibold text-slate-800">{{ $period }}</span> · all phones · closed days only · Labor = 30% of sales
+        after 10% diesel, split equally among the operators on duty each day. Voided transactions are not included.
     </p>
-
     @if (count($open_dates) > 0)
-        <div class="mb-6 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            <x-icon name="alert" class="size-5 shrink-0" />
-            <span>
-                {{ count($open_dates) }} {{ Str::plural('day', count($open_dates)) }} not yet closed ({{ collect($open_dates)->map(fn ($date) => $date->format('M j'))->implode(', ') }}).
-                Their amounts are marked <strong>Not final</strong> and may still change until End of Day.
-            </span>
-        </div>
+        <p class="mb-4 flex items-center gap-1.5 text-sm text-slate-500">
+            <x-icon name="moon" class="size-4 shrink-0" />
+            <span>Not counted yet (no End of Day): {{ collect($open_dates)->map(fn ($date) => $date->format('M j'))->implode(', ') }}</span>
+        </p>
     @endif
 
-    <div class="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
-        <x-stat label="Labor (final)" icon="wallet" :value="money($totals['final'])" tone="brand" :hint="count($days).' '.Str::plural('day', count($days)).' with operators on duty'" />
-        <x-stat label="Not final" icon="alert" :value="money($totals['pending'])" :tone="$totals['pending'] > 0 ? 'danger' : 'default'" hint="From days not yet closed" />
-        <x-stat label="Operators" icon="team" :value="(string) count($operators)" :hint="'Total '.money($totals['total'])" />
-    </div>
-
-    <h2 class="section-title">Per operator</h2>
-    <div class="table-wrap mb-8 max-w-3xl">
+    <h2 class="section-title mt-6">Per operator</h2>
+    <div class="table-wrap mb-8 max-w-2xl">
         <table class="table">
             <thead>
                 <tr>
                     <th class="col-no">#</th>
                     <th>Operator</th>
                     <th class="num">Days on duty</th>
-                    <th class="num">Labor share (final)</th>
-                    @if ($totals['pending'] > 0)
-                        <th class="num">Not final</th>
-                        <th class="num">Total</th>
-                    @endif
+                    <th class="num">Labor share</th>
                 </tr>
             </thead>
             <tbody>
@@ -80,25 +66,17 @@
                         <td class="col-no">{{ $loop->iteration }}</td>
                         <td class="font-medium">{{ $operator['name'] }}</td>
                         <td class="num">{{ $operator['days'] }}</td>
-                        <td class="num font-semibold">{{ money($operator['final']) }}</td>
-                        @if ($totals['pending'] > 0)
-                            <td class="num text-amber-700">{{ money($operator['pending']) }}</td>
-                            <td class="num">{{ money($operator['total']) }}</td>
-                        @endif
+                        <td class="num font-semibold">{{ money($operator['share']) }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="py-8 text-center text-slate-500">No operators on duty in this period.</td></tr>
+                    <tr><td colspan="4" class="py-8 text-center text-slate-500">No closed days with operators in this period.</td></tr>
                 @endforelse
             </tbody>
             @if (count($operators) > 0)
                 <tfoot>
                     <tr>
                         <td colspan="3">Total</td>
-                        <td class="num">{{ money($totals['final']) }}</td>
-                        @if ($totals['pending'] > 0)
-                            <td class="num">{{ money($totals['pending']) }}</td>
-                            <td class="num">{{ money($totals['total']) }}</td>
-                        @endif
+                        <td class="num">{{ money($total) }}</td>
                     </tr>
                 </tfoot>
             @endif
@@ -125,9 +103,6 @@
                             <td class="col-no">{{ $loop->iteration }}</td>
                             <td class="whitespace-nowrap">
                                 <a href="{{ route('reports.daily', ['date' => $day['date']->toDateString()]) }}" class="text-brand-600 hover:underline">{{ $day['date']->format('M j, D') }}</a>
-                                @unless ($day['final'])
-                                    <span class="badge ml-1 bg-amber-100 text-amber-800">Not final</span>
-                                @endunless
                             </td>
                             @foreach ($names as $name)
                                 <td class="num">{{ isset($day['shares'][$name]) ? money($day['shares'][$name]) : '—' }}</td>
@@ -140,9 +115,9 @@
                     <tr>
                         <td colspan="2">Total</td>
                         @foreach ($operators as $operator)
-                            <td class="num">{{ money($operator['total']) }}</td>
+                            <td class="num">{{ money($operator['share']) }}</td>
                         @endforeach
-                        <td class="num">{{ money($totals['total']) }}</td>
+                        <td class="num">{{ money($total) }}</td>
                     </tr>
                 </tfoot>
             </table>

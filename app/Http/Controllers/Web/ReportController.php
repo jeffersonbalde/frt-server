@@ -140,14 +140,13 @@ class ReportController extends Controller
         $names = array_column($report['operators'], 'name');
 
         $columns = [
-            ['Date', 'date'], ['Status', 'text'],
+            ['Date', 'date'],
             ...array_map(fn (string $name) => [$name, 'money'], $names),
             ['Day total', 'money'],
         ];
 
         $rows = array_map(fn (array $day) => [
             $day['date'],
-            $day['final'] ? 'Final' : 'Not final',
             ...array_map(fn (string $name) => isset($day['shares'][$name]) ? $this->pesos($day['shares'][$name]) : null, $names),
             $this->pesos($day['total']),
         ], $report['days']);
@@ -157,7 +156,7 @@ class ReportController extends Controller
     }
 
     /**
-     * The From–To dates of the labor report. Defaults to the current kinsenas (1–15 or 16–end of month).
+     * The From–To dates of the labor report. Defaults to this month.
      *
      * @return array{0: Carbon, 1: Carbon}
      */
@@ -170,7 +169,7 @@ class ReportController extends Controller
             'to.after_or_equal' => 'The "To" date must be on or after the "From" date.',
         ]);
 
-        [$from, $to] = $this->presets()['this_kinsenas']['range'];
+        [$from, $to] = $this->presets()['this_month']['range'];
 
         if (isset($validated['from'])) {
             $from = Carbon::parse($validated['from']);
@@ -191,23 +190,17 @@ class ReportController extends Controller
     }
 
     /**
-     * Quick ranges for the labor report: kinsenas are the 1st–15th and the 16th–end of the month; weeks run Monday–Sunday.
+     * Quick ranges for the labor report. Weeks run Monday–Sunday.
      *
      * @return array<string, array{label: string, range: array{0: Carbon, 1: Carbon}}>
      */
     private function presets(): array
     {
         $today = today();
-        $kinsenas = fn (Carbon $day) => $day->day <= 15
-            ? [$day->copy()->startOfMonth(), $day->copy()->startOfMonth()->addDays(14)]
-            : [$day->copy()->startOfMonth()->addDays(15), $day->copy()->endOfMonth()->startOfDay()];
-        [$thisStart] = $kinsenas($today);
         $weekStart = $today->copy()->startOfWeek(Carbon::MONDAY);
         $lastMonth = $today->copy()->startOfMonth()->subMonthNoOverflow();
 
         return [
-            'this_kinsenas' => ['label' => 'This kinsenas', 'range' => $kinsenas($today)],
-            'last_kinsenas' => ['label' => 'Last kinsenas', 'range' => $kinsenas($thisStart->copy()->subDay())],
             'this_week' => ['label' => 'This week', 'range' => [$weekStart, $weekStart->copy()->addDays(6)]],
             'last_week' => ['label' => 'Last week', 'range' => [$weekStart->copy()->subWeek(), $weekStart->copy()->subDay()]],
             'this_month' => ['label' => 'This month', 'range' => [$today->copy()->startOfMonth(), $today->copy()->endOfMonth()->startOfDay()]],

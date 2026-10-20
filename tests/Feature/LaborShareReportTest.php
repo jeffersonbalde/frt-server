@@ -57,32 +57,35 @@ it('adds up each operator\'s labor share between two dates', function () {
     $report = app(ReportService::class)->laborShares(Carbon::parse('2026-10-16'), Carbon::parse('2026-10-31'));
 
     expect($report['operators'])->toBe([
-        ['name' => 'Ariel', 'days' => 3, 'final' => 6201, 'pending' => 0, 'total' => 6201],
-        ['name' => 'Danilo', 'days' => 1, 'final' => 3000, 'pending' => 0, 'total' => 3000],
-        ['name' => 'Jerry', 'days' => 2, 'final' => 6200, 'pending' => 0, 'total' => 6200],
+        ['name' => 'Ariel', 'days' => 3, 'share' => 6201],
+        ['name' => 'Danilo', 'days' => 1, 'share' => 3000],
+        ['name' => 'Jerry', 'days' => 2, 'share' => 6200],
     ])
-        ->and($report['totals'])->toBe(['final' => 15401, 'pending' => 0, 'total' => 15401])
         ->and($report['open_dates'])->toBe([]);
 
     // Every centavo of labor is shared out: the total equals the labor of the valid transactions.
-    expect($report['totals']['total'])->toBe(5400 + 1001 + 9000);
+    expect($report['total'])->toBe(5400 + 1001 + 9000);
 });
 
-it('includes days not yet closed but marks them not final', function () {
+it('counts closed days only and names the days not closed yet', function () {
     laborDay($this->device, '2026-10-19', ['Ariel', 'Jerry'], [6000]);
-    laborDay($this->device, '2026-10-20', ['Ariel', 'Jerry'], [2000], status: 'open');
+    laborDay($this->device, '2026-10-20', ['Ariel', 'Jerry', 'Danilo'], [2000], status: 'open');
 
     $report = app(ReportService::class)->laborShares(Carbon::parse('2026-10-16'), Carbon::parse('2026-10-31'));
 
-    expect($report['totals'])->toBe(['final' => 6000, 'pending' => 2000, 'total' => 8000])
-        ->and($report['operators'][0])->toMatchArray(['name' => 'Ariel', 'final' => 3000, 'pending' => 1000])
-        ->and(array_map(fn ($date) => $date->toDateString(), $report['open_dates']))->toBe(['2026-10-20'])
-        ->and(array_column($report['days'], 'final'))->toBe([true, false]);
+    expect($report['total'])->toBe(6000)
+        ->and($report['operators'])->toBe([
+            ['name' => 'Ariel', 'days' => 1, 'share' => 3000],
+            ['name' => 'Jerry', 'days' => 1, 'share' => 3000],
+        ])
+        ->and(array_map(fn ($day) => $day['date']->toDateString(), $report['days']))->toBe(['2026-10-19'])
+        ->and(array_map(fn ($date) => $date->toDateString(), $report['open_dates']))->toBe(['2026-10-20']);
 
     $this->actingAs($this->owner)->get('/reports/labor?from=2026-10-16&to=2026-10-31')
         ->assertOk()
-        ->assertSee('1 day not yet closed (Oct 20)')
-        ->assertSee('Not final');
+        ->assertSee('Not counted yet (no End of Day): Oct 20')
+        ->assertDontSee('Danilo')
+        ->assertDontSee('Not final');
 });
 
 it('matches the labor shares on the Monthly Report', function () {
@@ -92,20 +95,18 @@ it('matches the labor shares on the Monthly Report', function () {
     $monthly = app(ReportService::class)->monthly($month)['operators'];
     $labor = app(ReportService::class)->laborShares($month, $month->copy()->endOfMonth());
 
-    expect(collect($labor['operators'])->mapWithKeys(fn ($operator) => [$operator['name'] => $operator['final']])->filter()->all())
+    expect(collect($labor['operators'])->mapWithKeys(fn ($operator) => [$operator['name'] => $operator['share']])->filter()->all())
         ->toBe($monthly->map(fn ($operator) => $operator['share'])->filter()->all());
 });
 
-it('defaults to the current kinsenas and offers quick ranges', function () {
-    $response = $this->actingAs($this->owner)->get('/reports/labor')->assertOk();
+it('defaults to this month and offers week and month quick ranges', function () {
+    $response = $this->actingAs($this->owner)->get('/reports/labor')->assertOk()->assertDontSee('kinsenas');
 
-    expect($response->viewData('from')->toDateString())->toBe('2026-10-16')
+    expect($response->viewData('from')->toDateString())->toBe('2026-10-01')
         ->and($response->viewData('to')->toDateString())->toBe('2026-10-31');
 
     $ranges = collect($response->viewData('presets'))->map(fn ($preset) => array_map(fn ($date) => $date->toDateString(), $preset['range']));
     expect($ranges->all())->toBe([
-        'this_kinsenas' => ['2026-10-16', '2026-10-31'],
-        'last_kinsenas' => ['2026-10-01', '2026-10-15'],
         'this_week' => ['2026-10-19', '2026-10-25'],
         'last_week' => ['2026-10-12', '2026-10-18'],
         'this_month' => ['2026-10-01', '2026-10-31'],
