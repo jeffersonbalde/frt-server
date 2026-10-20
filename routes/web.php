@@ -29,6 +29,8 @@ Route::middleware(['auth', 'session.limit', 'active', 'owner'])->group(function 
     Route::get('/reports/daily/export', [ReportController::class, 'dailyExport'])->name('reports.daily.export');
     Route::get('/reports/monthly', [ReportController::class, 'monthly'])->name('reports.monthly');
     Route::get('/reports/monthly/export', [ReportController::class, 'monthlyExport'])->name('reports.monthly.export');
+    Route::get('/reports/labor', [ReportController::class, 'labor'])->name('reports.labor');
+    Route::get('/reports/labor/export', [ReportController::class, 'laborExport'])->name('reports.labor.export');
 
     Route::get('/closings', [DayClosingController::class, 'index'])->name('closings.index');
     Route::get('/closings/{daySession}', [DayClosingController::class, 'show'])->name('closings.show');

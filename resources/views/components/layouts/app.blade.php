@@ -8,6 +8,7 @@
         'Reports' => [
             ['route' => 'reports.daily', 'label' => 'Daily Report', 'active' => 'reports.daily*', 'icon' => 'chart'],
             ['route' => 'reports.monthly', 'label' => 'Monthly Report', 'active' => 'reports.monthly*', 'icon' => 'calendar'],
+            ['route' => 'reports.labor', 'label' => 'Labor Shares', 'active' => 'reports.labor*', 'icon' => 'wallet'],
             ['route' => 'closings.index', 'label' => 'End of Day', 'active' => 'closings.*', 'icon' => 'moon'],
             ['route' => 'voids.index', 'label' => 'Voided Transactions', 'active' => 'voids.*', 'icon' => 'void'],
         ],

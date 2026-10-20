@@ -8,6 +8,7 @@ use App\Services\ReportService;
 use App\Support\ExcelExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -118,6 +119,100 @@ class ReportController extends Controller
 
         return (new ExcelExport($month->format('F Y'), $columns, $rows->values()->all()))
             ->download("frt-monthly-{$month->format('Y-m')}.xlsx");
+    }
+
+    public function labor(Request $request): View
+    {
+        [$from, $to] = $this->range($request);
+
+        return view('reports.labor', [
+            'from' => $from,
+            'to' => $to,
+            'presets' => $this->presets(),
+            ...$this->reports->laborShares($from, $to),
+        ]);
+    }
+
+    public function laborExport(Request $request): BinaryFileResponse
+    {
+        [$from, $to] = $this->range($request);
+        $report = $this->reports->laborShares($from, $to);
+        $names = array_column($report['operators'], 'name');
+
+        $columns = [
+            ['Date', 'date'], ['Status', 'text'],
+            ...array_map(fn (string $name) => [$name, 'money'], $names),
+            ['Day total', 'money'],
+        ];
+
+        $rows = array_map(fn (array $day) => [
+            $day['date'],
+            $day['final'] ? 'Final' : 'Not final',
+            ...array_map(fn (string $name) => isset($day['shares'][$name]) ? $this->pesos($day['shares'][$name]) : null, $names),
+            $this->pesos($day['total']),
+        ], $report['days']);
+
+        return (new ExcelExport("Labor {$from->format('M j')} - {$to->format('M j, Y')}", $columns, $rows))
+            ->download("frt-labor-{$from->toDateString()}-to-{$to->toDateString()}.xlsx");
+    }
+
+    /**
+     * The From–To dates of the labor report. Defaults to the current kinsenas (1–15 or 16–end of month).
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function range(Request $request): array
+    {
+        $validated = $request->validate([
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+        ], [
+            'to.after_or_equal' => 'The "To" date must be on or after the "From" date.',
+        ]);
+
+        [$from, $to] = $this->presets()['this_kinsenas']['range'];
+
+        if (isset($validated['from'])) {
+            $from = Carbon::parse($validated['from']);
+            $to = $from->copy();
+        }
+        if (isset($validated['to'])) {
+            $to = Carbon::parse($validated['to']);
+        }
+        if ($to->lt($from)) {
+            [$from, $to] = [$to, $from];
+        }
+
+        if ($from->diffInDays($to, true) > 366) {
+            throw ValidationException::withMessages(['to' => 'Choose a period of one year or less.']);
+        }
+
+        return [$from, $to];
+    }
+
+    /**
+     * Quick ranges for the labor report: kinsenas are the 1st–15th and the 16th–end of the month; weeks run Monday–Sunday.
+     *
+     * @return array<string, array{label: string, range: array{0: Carbon, 1: Carbon}}>
+     */
+    private function presets(): array
+    {
+        $today = today();
+        $kinsenas = fn (Carbon $day) => $day->day <= 15
+            ? [$day->copy()->startOfMonth(), $day->copy()->startOfMonth()->addDays(14)]
+            : [$day->copy()->startOfMonth()->addDays(15), $day->copy()->endOfMonth()->startOfDay()];
+        [$thisStart] = $kinsenas($today);
+        $weekStart = $today->copy()->startOfWeek(Carbon::MONDAY);
+        $lastMonth = $today->copy()->startOfMonth()->subMonthNoOverflow();
+
+        return [
+            'this_kinsenas' => ['label' => 'This kinsenas', 'range' => $kinsenas($today)],
+            'last_kinsenas' => ['label' => 'Last kinsenas', 'range' => $kinsenas($thisStart->copy()->subDay())],
+            'this_week' => ['label' => 'This week', 'range' => [$weekStart, $weekStart->copy()->addDays(6)]],
+            'last_week' => ['label' => 'Last week', 'range' => [$weekStart->copy()->subWeek(), $weekStart->copy()->subDay()]],
+            'this_month' => ['label' => 'This month', 'range' => [$today->copy()->startOfMonth(), $today->copy()->endOfMonth()->startOfDay()]],
+            'last_month' => ['label' => 'Last month', 'range' => [$lastMonth, $lastMonth->copy()->endOfMonth()->startOfDay()]],
+        ];
     }
 
     private function date(Request $request): Carbon
